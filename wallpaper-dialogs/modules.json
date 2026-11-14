@@ -1,0 +1,17 @@
+[
+  {
+    "id": "editor",
+    "name": "Outline editor",
+    "enabled": false
+  },
+  {
+    "id": "eyepaint",
+    "name": "Eye mask painter",
+    "enabled": false
+  },
+  {
+    "id": "eyetint",
+    "name": "Eye follows cover art",
+    "enabled": true
+  }
+]

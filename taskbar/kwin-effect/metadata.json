@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "KWin/Effect",
+    "KPlugin": {
+        "Category": "Appearance",
+        "Description": "Squash windows into the floating dock when they are minimized",
+        "EnabledByDefault": false,
+        "Icon": "preferences-system-windows-effect-squash",
+        "Id": "dockminimize",
+        "License": "GPL",
+        "Name": "Squash to Dock"
+    },
+    "X-KDE-Ordering": 60,
+    "X-KWin-Exclusive-Category": "minimize",
+    "X-Plasma-API": "javascript"
+}

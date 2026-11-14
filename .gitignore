@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+# build output
+taskbar/iconhelper/build/
+# per-machine state
+taskbar/lyrics-widget.json
+taskbar/iconhelper/iconhelper

@@ -1,0 +1,13 @@
+[
+  {"id": "launcher", "name": "App launcher", "enabled": true, "group": "Dock"},
+  {"id": "tasks", "name": "Open windows", "enabled": true, "group": "Dock"},
+  {"id": "appname", "name": "App icon", "enabled": true, "group": "Top bar", "section": "left"},
+  {"id": "lyrics", "name": "Synced lyrics", "enabled": true, "group": "Top bar", "section": "left"},
+  {"id": "media", "name": "Media player", "enabled": true, "group": "Top bar", "section": "center"},
+  {"id": "tray", "name": "System tray", "enabled": true, "group": "Top bar", "section": "right"},
+  {"id": "controls", "name": "Wi-Fi, Bluetooth & sound", "enabled": true, "group": "Top bar", "section": "right"},
+  {"id": "battery", "name": "Battery", "enabled": true, "group": "Top bar", "section": "right"},
+  {"id": "clock", "name": "Clock", "enabled": true, "group": "Top bar", "section": "right"},
+  {"id": "window", "name": "Window buttons", "enabled": true, "group": "Top bar", "section": "right"},
+  {"id": "lyricswidget", "name": "Lyrics widget", "enabled": true, "group": "Desktop"}
+]

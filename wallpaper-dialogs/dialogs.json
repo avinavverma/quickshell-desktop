@@ -1,0 +1,28 @@
+{
+ "image": "wallpaper.jpg",
+ "imageWidth": 3840,
+ "imageHeight": 2160,
+ "dialogs": [
+  {
+   "name": "eye",
+   "poly": [
+    [
+     1424,
+     620
+    ],
+    [
+     2420,
+     620
+    ],
+    [
+     2420,
+     1404
+    ],
+    [
+     1424,
+     1404
+    ]
+   ]
+  }
+ ]
+}

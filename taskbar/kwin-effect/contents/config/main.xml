@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+                          http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+    <kcfgfile name=""/>
+    <group name="">
+        <!-- Written by the taskbar's windows.py: JSON object mapping
+             "<windowClass>\n<caption>" (and plain "<windowClass>") to [x, y, w, h]
+             of that window's icon in the dock, in screen coordinates. -->
+        <entry name="IconRects" type="String">
+            <default>{}</default>
+        </entry>
+    </group>
+</kcfg>
