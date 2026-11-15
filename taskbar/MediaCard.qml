@@ -6,14 +6,26 @@ import Quickshell.Widgets
 // The big player that drops down below the top bar while the media chip is hovered.
 Rectangle {
     id: card
-    property bool open: false
     readonly property bool hovered: hover.hovered
     readonly property var player: NowPlaying.player
-    // Stay open briefly after the pointer leaves, so it can travel from chip to card.
-    readonly property bool shown: (open || closeDelay.running) && player !== null
-
-    onOpenChanged: if (!open) closeDelay.restart()
-    Timer { id: closeDelay; interval: 250 }
+    // Opened by hovering the media chip / the card, or because you're looking at the desktop.
+    property bool hoverOpen: false
+    property bool desktopOpen: false
+    readonly property bool open: hoverOpen || desktopOpen
+    // After the pointer leaves it stays briefly (so it can travel from chip to card); when an app
+    // opens it goes at once, with a quick fade.
+    property bool shownState: false
+    readonly property bool shown: shownState && player !== null
+    property int fadeMs: Theme.anim / 1.5
+    function update(fromDesktop) {
+        if (hoverOpen || desktopOpen) { closeDelay.stop(); fadeMs = Theme.anim / 1.5; shownState = true }   // (not `open`: its binding may not have updated yet)
+        else if (fromDesktop) { closeDelay.stop(); fadeMs = 110; shownState = false }
+        else closeDelay.restart()
+    }
+    onHoverOpenChanged: update(false)
+    onDesktopOpenChanged: update(true)
+    Component.onCompleted: update(false)
+    Timer { id: closeDelay; interval: 250; onTriggered: if (!card.hoverOpen && !card.desktopOpen) { card.fadeMs = Theme.anim / 1.5; card.shownState = false } }
 
     TextMetrics { id: titleMetrics; font: titleText.font; text: titleText.text }      // full, un-elided text widths
     TextMetrics { id: artistMetrics; font: artistLine.font; text: artistLine.text }
@@ -27,12 +39,16 @@ Rectangle {
     border.color: Theme.border
     border.width: 1
 
-    opacity: shown ? 1 : 0
-    scale: shown ? 1 : 0.92
+    // One 0..1 value drives the whole entrance: fade, a gentle zoom from 95 % and a short drop
+    // from under the bar. Opening eases out slowly (OutQuint, no overshoot); closing is quick.
+    property real reveal: shown ? 1 : 0
+    Behavior on reveal { NumberAnimation { duration: card.shownState ? 360 : card.fadeMs; easing.type: card.shownState ? Easing.OutQuint : Easing.InCubic } }
+    readonly property real dropY: -8 * (1 - reveal)
+    opacity: reveal
+    scale: 0.95 + 0.05 * reveal
     transformOrigin: Item.Top
-    visible: opacity > 0
-    Behavior on opacity { NumberAnimation { duration: Theme.anim / 1.5 } }
-    Behavior on scale { NumberAnimation { duration: Theme.anim; easing.type: Easing.OutBack } }
+    transform: Translate { y: card.dropY }
+    visible: reveal > 0.001
 
     // Apple-Music-style ambience: the cover art, blurred and saturated, glowing through the glass.
     ClippingRectangle {
@@ -223,4 +239,3 @@ Rectangle {
         }
     }
 }
-

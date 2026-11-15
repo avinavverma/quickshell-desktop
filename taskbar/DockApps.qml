@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import org.kde.pipewire as PW
+import org.kde.taskmanager as TM
 
 // The macOS-style dock row: launcher, pinned + running apps, divider,
 // minimised windows (one tile each, in the order they were minimised), Trash.
@@ -169,12 +171,125 @@ RowLayout {
         }
     }
 
+    // ---------- live preview of a minimised window ----------
+    // Hovering a minimised window's tile shows a live thumbnail above it at once - every minimised
+    // window's stream is started as soon as the pointer is over the dock, so the first frame is ready (KWin streams the window
+    // through PipeWire even while it's minimised - the same parts Plasma's task manager uses).
+    property Item previewTarget: null
+    property bool previewShown: false
+    function hoverPreview(tile, on) {
+        if (on) { previewTarget = tile; previewShown = true }
+        else if (previewTarget === tile) hidePreview()
+    }
+    function hidePreview() { previewShown = false }
+
+    PopupWindow {
+        id: preview
+        readonly property var tile: root.previewTarget
+        readonly property string uuid: tile?.entry?.id ?? ""
+        visible: root.previewShown && tile !== null && root.dockShown
+        anchor.item: tile
+        anchor.rect.x: 0
+        anchor.rect.y: -10
+        anchor.rect.width: tile?.width ?? 1
+        anchor.rect.height: 1
+        anchor.edges: Edges.Top
+        anchor.gravity: Edges.Top
+        implicitWidth: 312        // card 300×214 + 6 px transparent margin (see `page`)
+        implicitHeight: 226
+        color: "transparent"
+
+        // The card is drawn flat into a layer that has a few transparent pixels all round, and that
+        // layer is what gets turned. The turned layer's own outline is invisible (transparent), and
+        // the card's real edge lies inside the texture, where it is filtered smoothly - so the
+        // turned edges don't come out jagged (a transformed quad's outline isn't antialiased).
+        Item {
+            id: page
+            anchors.fill: parent
+            opacity: preview.visible ? 1 : 0
+            // Turned like a book page hinged on its left edge - shown at that angle straight away.
+            Behavior on opacity { NumberAnimation { duration: 90 } }
+            transform: Rotation {
+                origin.x: 0; origin.y: page.height / 2
+                axis { x: 0; y: 1; z: 0 }
+                angle: root.enabledIds.includes("previewtilt") ? 18 : 0     // Switchboard: "Tilted window previews"
+            }
+            layer.enabled: preview.visible
+            layer.smooth: true
+            layer.mipmap: true
+            layer.samples: 4
+            layer.textureSize: Qt.size(width * 2, height * 2)   // supersampled
+
+        Rectangle {
+            id: pv
+            anchors.fill: parent
+            anchors.margins: 6
+            radius: 16
+            antialiasing: true
+            color: Theme.bgSolid
+            border.color: Theme.border
+            border.width: 1
+
+
+            Item {
+                id: frame
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                height: 164
+                // The window arrives at full size (e.g. 1920×1080) and is shown ~7× smaller. Drawn
+                // straight, that skips pixels and looks pixelated; so draw it 4× larger into a
+                // mipmapped layer and scale that down - the GPU then averages the pixels properly.
+                Item {
+                    width: frame.width * 4; height: frame.height * 4
+                    scale: 0.25
+                    transformOrigin: Item.TopLeft
+                    layer.enabled: preview.visible
+                    layer.mipmap: true
+                    layer.smooth: true
+                    PW.PipeWireSourceItem {
+                        anchors.fill: parent
+                        nodeId: preview.tile?.castNode ?? 0
+                        visible: nodeId > 0
+                    }
+                }
+                Text {     // until the first frame arrives
+                    anchors.centerIn: parent
+                    visible: (preview.tile?.castNode ?? 0) === 0
+                    text: "…"
+                    color: Theme.fgDim; font.family: Theme.font; font.pixelSize: 18
+                }
+            }
+            Text {
+                anchors { left: parent.left; right: parent.right; top: frame.bottom; topMargin: 8; leftMargin: 14; rightMargin: 14 }
+                text: preview.tile?.entry?.name ?? ""
+                color: Theme.fg; font.family: Theme.font; font.pixelSize: 12; font.weight: Font.Medium
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+            }
+            Rectangle {   // the page darkens a little toward the edge that turns away
+                anchors.fill: parent
+                radius: parent.radius
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "#00000000" }
+                    GradientStop { position: 1.0; color: "#38000000" }
+                }
+            }
+        }
+        }
+    }
+
     Repeater {
         id: items
         model: ScriptModel { values: root.displayKeys }
 
         Item {
             id: item
+            // live stream of a minimised window, running while the pointer is over the dock (for the preview)
+            TM.ScreencastingRequest {
+                id: tileCast
+                uuid: item.entry.kind === "min" && (hover.hovered || root.previewShown) ? item.entry.id : ""
+            }
+            readonly property int castNode: tileCast.nodeId
             required property string modelData   // the entry's key
             required property int index
             readonly property var entry: root.byKey[modelData] ?? root.lastByKey[modelData] ?? ({ kind: "sep" })
@@ -278,6 +393,7 @@ RowLayout {
             // --- name bubble above the hovered icon ---
             Rectangle {
                 visible: area.containsMouse && !item.isSep && Menus.open !== "dock"
+                         && item.entry.kind !== "min"     // the preview shows the name
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: iconBox.y - height - 12
                 width: label.implicitWidth + 20; height: 26; radius: 8
@@ -307,6 +423,8 @@ RowLayout {
                 enabled: !item.isSep && !item.isLeaving
                 anchors.fill: parent
                 hoverEnabled: true
+                onContainsMouseChanged: if (item.entry.kind === "min") root.hoverPreview(item, containsMouse)
+                onPressed: root.hidePreview()
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                 cursorShape: Qt.PointingHandCursor
                 onClicked: mouse => {

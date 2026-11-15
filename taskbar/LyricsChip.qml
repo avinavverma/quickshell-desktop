@@ -1,40 +1,15 @@
 import QtQuick
 
-// The line being sung, right after the app icon; changes with a quick fade + slide.
+// Holds the space for the lyric line right after the app icon. The line itself is drawn by
+// TopBar.qml, so it can glide from here to the middle of the bar on the desktop.
 Item {
     id: root
-    readonly property bool available: Lyrics.line !== ""
-    implicitHeight: label.implicitHeight
-    implicitWidth: label.width
-
-    property string shown: ""
-    Connections {
-        target: Lyrics
-        function onLineChanged() { if (Lyrics.line !== "") swap.restart(); else root.shown = "" }
-    }
-    Component.onCompleted: shown = Lyrics.line
-
-    SequentialAnimation {
-        id: swap
-        ParallelAnimation {
-            NumberAnimation { target: label; property: "opacity"; to: 0; duration: 80 }
-            NumberAnimation { target: label; property: "yOff"; to: 4; duration: 80 }
-        }
-        ScriptAction { script: { root.shown = Lyrics.line; label.yOff = -4 } }
-        ParallelAnimation {
-            NumberAnimation { target: label; property: "opacity"; to: 1; duration: 180; easing.type: Easing.OutCubic }
-            NumberAnimation { target: label; property: "yOff"; to: 0; duration: 180; easing.type: Easing.OutCubic }
-        }
-    }
-
-    Text {
-        id: label
-        property real yOff: 0
-        text: root.shown
-        color: Theme.fg
+    readonly property bool available: Lyrics.line !== "" && !(Windows.desktopVisible && Modules.ids("Desktop").includes("desktopmedia"))
+    implicitHeight: metrics.height
+    implicitWidth: Math.min(metrics.advanceWidth, 440)
+    TextMetrics {
+        id: metrics
         font.family: Theme.font; font.pixelSize: Theme.fontSize
-        elide: Text.ElideRight
-        width: Math.min(implicitWidth, 440)
-        y: yOff
+        text: Lyrics.line
     }
 }

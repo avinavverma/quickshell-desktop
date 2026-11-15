@@ -56,3 +56,17 @@ left-drag paints, right-drag/`E` erases, wheel or `[ ]` sets the brush size, `V`
 Inside the painted part the wallpaper's own pink cast is removed: only its light/dark is kept and repainted in the
 cover-art accent (shadows dark accent, the iris/heart = the accent, glints a bit lighter), so a red cover gives a red eye,
 not pink. `"eye": {"variety": 0.0}` in `dialogs.json` blends the original colour variety back in (0 = pure accent, 1 = hue-shifted original).
+
+## Decision log
+Newest last. Every feature and change of direction is noted here.
+
+1. **First version:** dialog rectangles found by scanning for white title bars (no numpy/OpenCV on this machine), each box drawn as its own layer from the wallpaper image; hover = tilt toward the cursor (the side under the cursor comes forward), 7 % lift, shadow. Idle cost zero: layers hidden at rest.
+2. **Outline editor** (`Editor.qml`, `tools/edit.sh`): outlines are polygons, not rectangles, so slightly skewed boxes fit; boxes behind others get the front ones cut out.
+3. **Beat pulse — tried and removed.** Boxes pulsed to the song's tempo (audio analysis in `tools/beat.py`); a free BPM API (GetSongBPM) needed a key and a backlink. Replaced, at the user's request, by a constant gentle float.
+4. **Idle float:** every box drifts and tilts slightly all the time (30 updates/s, ~5 % of a core); boxes drawn 2.5 % larger so the flat copy underneath never peeks out.
+5. **Editor in Switchboard:** "Outline editor" switch via `modules.json`, kept in sync with `tools/edit.sh`.
+6. **Shadows while floating**, stronger and lower on hover.
+7. **Eye follows the cover art:** the taskbar writes the accent to `$XDG_RUNTIME_DIR/taskbar-accent`; first the whole eye window was re-hued, then (user's choice) **only a painted mask** (`eye-mask.png`, paintbrush app `EyePainter.qml`, later with undo/redo).
+8. **Exact cover colour:** inside the mask the wallpaper's pink cast is removed (colourise by brightness) so a red cover gives a red eye; `variety` brings some original colour back.
+9. **Nothing playing → original pink** (the file says `none`); any cover colour is allowed, including white / grey / black (average colour of greyscale art).
+10. **Desktop icons and rubber-band selection must keep working:** the window is now transparent and only draws the boxes over Plasma's own wallpaper (it used to paint a full copy of the wallpaper on top).

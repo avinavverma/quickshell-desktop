@@ -3,9 +3,11 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Services.Pipewire
 
 // Two bars per monitor: a floating pill dock at the bottom and a floating bar at the top.
 ShellRoot {
+    id: root
     // Icons are loaded once at start, so when KDE's icon theme changes,
     // restart the taskbar (it runs as the sb-taskbar systemd service).
     FileView {
@@ -22,6 +24,47 @@ ShellRoot {
             theme = t
         }
     }
+
+    // ---------- touchpad: four-finger tap, left-edge media control ----------
+    // Switchboard group "Touchpad":
+    //   "Four-finger tap: play / pause"         -> touchpad-taps.py (just reads the touchpad)
+    //   "Left edge: tap play / pause, slide volume" -> touchpad-edge.py (takes the touchpad and
+    //      passes everything except left-edge touches on through a virtual copy; also does the
+    //      four-finger tap then, since nothing else can read a taken touchpad)
+    readonly property bool tap4On: Modules.ids("Touchpad").includes("tap4playpause")
+    readonly property bool edgeOn: Modules.ids("Touchpad").includes("edgemedia")
+    readonly property var touchpadCmd: edgeOn
+        ? ["python3", Qt.resolvedUrl("touchpad-edge.py").toString().replace("file://", "")].concat(tap4On ? ["--tap4"] : [])
+        : ["python3", Qt.resolvedUrl("touchpad-taps.py").toString().replace("file://", "")]
+    readonly property bool touchpadWanted: tap4On || edgeOn
+    onTouchpadCmdChanged: { taps.running = false; tapsRestart.restart() }
+    onTouchpadWantedChanged: { taps.running = false; tapsRestart.restart() }
+
+    PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+    function changeVolume(delta) {
+        const a = Pipewire.defaultAudioSink?.audio
+        if (!a) return
+        if (a.muted && delta > 0) a.muted = false
+        a.volume = Math.max(0, Math.min(1, a.volume + delta))
+        // Plasma's own volume pop-up, so you can see the level while sliding
+        Quickshell.execDetached(["qdbus6", "org.kde.plasmashell", "/org/kde/osdService",
+                                 "org.kde.osdService.volumeChanged", String(Math.round(a.volume * 100))])
+    }
+
+    Process {
+        id: taps
+        command: root.touchpadCmd
+        running: root.touchpadWanted
+        stdout: SplitParser {
+            onRead: line => {
+                const l = line.trim()
+                if (l === "tap4" || l === "playpause") { if (NowPlaying.player) NowPlaying.player.togglePlaying() }
+                else if (l.startsWith("vol ")) root.changeVolume(parseFloat(l.slice(4)))
+            }
+        }
+        onExited: code => { if (root.touchpadWanted) tapsRestart.restart() }
+    }
+    Timer { id: tapsRestart; interval: 1500; onTriggered: taps.running = root.touchpadWanted }
 
     Variants {
         model: Quickshell.screens
@@ -123,17 +166,29 @@ ShellRoot {
                 implicitHeight: Theme.barHeight + Theme.cardGap + Theme.cardHeight
                 color: "transparent"
                 mask: Region { item: cardMask }
-                BackgroundEffect.blurRegion: Region { item: cardMask; radius: 28 }
+                // The glass follows the card's own fade/zoom: it only appears once the card is almost
+                // fully in (else the glass frame shows up before the content) and goes as soon as it closes.
+                BackgroundEffect.blurRegion: Region { item: cardBlur; radius: 28 * card.scale }
 
                 MediaCard {
                     id: card
-                    open: topBar.mediaHovered || hovered
+                    hoverOpen: topBar.mediaHovered || hovered
+                    desktopOpen: Windows.desktopVisible && NowPlaying.player !== null && Modules.ids("Desktop").includes("desktopmedia")   // stays open on the desktop (Switchboard option)
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: parent.top
                     anchors.topMargin: Theme.barHeight + Theme.cardGap
                 }
 
-                // Click / blur area for the card: zero-sized while it's closed.
+                Item {
+                    id: cardBlur
+                    readonly property bool on: card.shown && card.reveal > 0.92
+                    width: on ? card.width * card.scale : 0
+                    height: on ? card.height * card.scale : 0
+                    x: card.x + (card.width - width) / 2      // the card zooms from its top centre
+                    y: card.y + card.dropY
+                }
+
+                // Click area for the card: zero-sized while it's closed.
                 Item {
                     id: cardMask
                     x: card.x; y: card.y
