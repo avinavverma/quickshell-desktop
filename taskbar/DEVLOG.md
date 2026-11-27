@@ -101,6 +101,8 @@ Testing note: KDE won't let a script raise a window over the one you're actively
 
 Note: apps launched from the dock inherit the bridge's stderr, so their warnings (e.g. Firefox's GTK icon-theme notices) show up in the taskbar log as `windows.py:` lines — harmless.
 
+29. **Another PC had no Liquid Glass or genie** — the repo only held project files; the effect package, `iconhelper` build and KWin settings live outside it. **Fix:** `setup.sh` at the repo root installs packages + `kwin-effects-glass-git`, builds `iconhelper`, writes the exact KWin/KDE settings, adds Switchboard to the launcher, starts the taskbar at login and optionally removes the Plasma panel. Verified on this PC: all steps OK and `kwinrc`, `kdeglobals`, `kglobalshortcutsrc` byte-identical before/after (so it reproduces this setup exactly).
+
 ## Liquid Glass (KWin effect)
 - Installed **kwin-effects-glass** from the AUR (`kwin-effects-glass-git`, builds 4v3ngR/kwin-effects-glass from GitHub; PKGBUILD reviewed — plain cmake build). Effect id `glass`; settings group **`[Effect-blurplus]`** (inherited name).
 - KWin's built-in `blur` disabled (`[Plugins] blurEnabled=false`, `glassEnabled=true`) — they conflict.

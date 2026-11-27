@@ -10,6 +10,16 @@ My KDE Plasma (Wayland) desktop, built with [Quickshell](https://quickshell.org)
 
 Every folder with a `shell.qml` (or an executable `run.sh`) shows up in Switchboard.
 
+## Setting up a new PC
+On CachyOS / Arch with KDE Plasma 6 (Wayland):
+
+```bash
+git clone https://github.com/avinavverma/quickshell-desktop.git ~/Projects
+cd ~/Projects && ./setup.sh
+```
+
+`setup.sh` installs the packages, builds and installs the **Liquid Glass** KWin effect (AUR, via paru/yay), builds `iconhelper` (needed for the **genie** to fly into the dock), writes the KDE/KWin settings (Magic Lamp + Glass values, title-bar buttons, animation speed, Super → KRunner), adds Switchboard to the launcher, starts the taskbar at login, and offers to remove KDE's own panel (backing it up). It asks before anything system-wide, is safe to re-run, and `--yes` answers everything. Afterwards: log out and in once, and add Firefox's **Plasma Integration** add-on for the media progress bar.
+
 Needs: Quickshell, `jq`, `curl`, `ffmpeg`, Python 3 with GLib bindings, and the Plasma Browser Integration add-on for browser media. The taskbar's glass look uses the `kwin-effects-glass` KWin effect.
 
 ## Where decisions are written down
