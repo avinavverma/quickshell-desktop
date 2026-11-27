@@ -122,6 +122,12 @@ ShellRoot {
                 }
             }
 
+            // ---------- desktop search bar (Firefox; switch in Switchboard; first screen only) ----------
+            LazyLoader {
+                active: Modules.ids("Desktop").includes("searchbar") && perScreen.modelData === Quickshell.screens[0]
+                SearchWidget { screen: perScreen.modelData }
+            }
+
             // ---------- desktop lyrics widget (switch in Switchboard; first screen only) ----------
             LazyLoader {
                 active: Modules.ids("Desktop").includes("lyricswidget") && perScreen.modelData === Quickshell.screens[0]

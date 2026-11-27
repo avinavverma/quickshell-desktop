@@ -21,9 +21,9 @@ Singleton {
     }
     function toggleNightLight() {
         nightLight = !nightLight
-        Quickshell.execDetached(["sh", "-c", nightLight
-            ? "kwriteconfig6 --file kwinrc --group NightColor --key Active true && kwriteconfig6 --file kwinrc --group NightColor --key Mode Constant && qdbus6 org.kde.KWin /KWin reconfigure"
-            : "kwriteconfig6 --file kwinrc --group NightColor --key Active false && qdbus6 org.kde.KWin /KWin reconfigure"])
+        // nightlight.sh writes the settings *with a change notification* - KWin's
+        // `reconfigure` does not reload Night Light, so the old way only changed the file.
+        Quickshell.execDetached([Qt.resolvedUrl("nightlight.sh").toString().replace("file://", ""), nightLight ? "on" : "off"])
     }
     function toggleDnd() {
         dnd = !dnd

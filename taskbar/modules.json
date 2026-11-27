@@ -86,6 +86,12 @@
     "group": "Desktop"
   },
   {
+    "id": "searchbar",
+    "name": "Search bar (Firefox)",
+    "enabled": false,
+    "group": "Desktop"
+  },
+  {
     "id": "tap4playpause",
     "name": "Four-finger tap: play / pause",
     "enabled": true,
