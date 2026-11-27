@@ -18,7 +18,21 @@ git clone https://github.com/avinavverma/quickshell-desktop.git ~/Projects
 cd ~/Projects && ./setup.sh
 ```
 
-`setup.sh` installs the packages, builds and installs the **Liquid Glass** KWin effect (AUR, via paru/yay), builds `iconhelper` (needed for the **genie** to fly into the dock), writes the KDE/KWin settings (Magic Lamp + Glass values, title-bar buttons, animation speed, Super → KRunner), adds Switchboard to the launcher, starts the taskbar at login, and offers to remove KDE's own panel (backing it up). It asks before anything system-wide, is safe to re-run, and `--yes` answers everything. Afterwards: log out and in once, and add Firefox's **Plasma Integration** add-on for the media progress bar.
+`setup.sh` recreates the whole setup, not just the projects:
+
+| Step | What |
+|---|---|
+| Packages | Quickshell, qt6-tools (`qdbus6`), Inter, ffmpeg, jq, protocol files, build tools, … |
+| Liquid Glass | builds `kwin-effects-glass-git` from the AUR (paru/yay) |
+| Genie | builds `iconhelper` so Magic Lamp flies into the dock |
+| KWin / KDE | Magic Lamp + Glass values, blur off, Breeze title bars with buttons on the right, animation speed 0.25, Super → KRunner |
+| Look | **Mkos-Big-Sur-Night** icons (from `assets/`), Breeze Dark, Breeze cursor, wallpaper (`assets/wallpaper.jpg`, or the floating-dialogs one) |
+| Touchpad gestures | `input` group + a `/dev/uinput` udev rule |
+| keyd | optional: Right Alt ↔ Super, PrtScr ↔ Insert (`assets/keyd/default.conf`) |
+| Firefox | optional policy that installs the Plasma Integration add-on (media progress bar) |
+| Run | Switchboard in the launcher; taskbar started and enabled at login; optionally removes KDE's panel (backed up) |
+
+The dock's behaviour (auto-hide, staying up on the desktop, pins in `taskbar/dock.json`, modules in `modules.json`) is part of the repo itself. The script asks before anything system-wide or optional, is safe to re-run, and `--yes` takes the defaults. Afterwards, log out and in once.
 
 Needs: Quickshell, `jq`, `curl`, `ffmpeg`, Python 3 with GLib bindings, and the Plasma Browser Integration add-on for browser media. The taskbar's glass look uses the `kwin-effects-glass` KWin effect.
 
@@ -28,7 +42,7 @@ Every feature and change of direction is logged as it happens:
 - `wallpaper-dialogs/README.md` — features plus a "Decision log" at the end
 
 ## System settings changed outside this repo
-These live in `~/.config`, not here, so they are listed for a reinstall:
+These live outside the repo; `setup.sh` applies all of them (listed here for reference):
 - **Super opens KRunner:** in KDE's global shortcuts, KRunner's `_launch` action has `Meta` added (next to Alt+Space / Alt+F2 / Search) and `Meta` was removed from Plasma's "Activate Application Launcher" (Alt+F1 remains). The old `kwinrc` `[ModifierOnlyShortcuts] Meta=` entry was cleared — it no longer did anything on Plasma 6.8.
 - **keyd** (`/etc/keyd/default.conf`, the user's own): Right Alt ↔ left Meta and PrtScr ↔ Insert are swapped, so the key at Right Alt's place is "Super".
 - **Glass KWin effect** (`kwin-effects-glass-git` from the AUR) with the settings in `taskbar/DEVLOG.md`.
